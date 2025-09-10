@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SVG Drawing Tool</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; }
+    h2 { margin: 0 0 12px; }
+    .board {
+      border: 2px solid #555; /* only the drawing area has border */
+      background: #fafafa;
+      width: 800px;
+      height: 450px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h2>SVG Drawing Tool</h2>
+
+  <!-- Drawing area -->
+  <svg id="board" class="board"></svg>
+
+  <script>
+    const svg = document.getElementById('board');
+
+    let drawing = false;
+    let pathEl = null;
+
+    function getPoint(evt) {
+      const pt = svg.createSVGPoint();
+      pt.x = evt.clientX;
+      pt.y = evt.clientY;
+      return pt.matrixTransform(svg.getScreenCTM().inverse());
+    }
+
+    function startDraw(evt) {
+      evt.preventDefault();
+      drawing = true;
+
+      const { x, y } = getPoint(evt);
+      pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathEl.setAttribute('fill', 'none');
+      pathEl.setAttribute('stroke', '#1e90ff');
+      pathEl.setAttribute('stroke-width', '3');
+      pathEl.setAttribute('stroke-linecap', 'round');
+      pathEl.setAttribute('stroke-linejoin', 'round');
+      pathEl.setAttribute('d', `M ${x} ${y}`);
+
+      svg.appendChild(pathEl);
+      svg.setPointerCapture?.(evt.pointerId);
+    }
+
+    function draw(evt) {
+      if (!drawing || !pathEl) return;
+      const { x, y } = getPoint(evt);
+      pathEl.setAttribute('d', pathEl.getAttribute('d') + ` L ${x} ${y}`);
+    }
+
+    function endDraw(evt) {
+      if (!drawing) return;
+      drawing = false;
+      svg.releasePointerCapture?.(evt.pointerId);
+      pathEl = null;
+    }
+
+    svg.addEventListener('pointerdown', startDraw);
+    svg.addEventListener('pointermove', draw);
+    svg.addEventListener('pointerup', endDraw);
+    svg.addEventListener('pointerleave', endDraw);
+    svg.addEventListener('pointercancel', endDraw);
+  </script>
+</body>
+</html>
